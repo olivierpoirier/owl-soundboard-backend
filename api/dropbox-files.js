@@ -153,13 +153,13 @@ export default async function handler(req, res) {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Dropbox-API-Arg": JSON.stringify({
+        "Dropbox-API-Arg": JSON.stringify({
             path: cleanPath,
-            mode: "add",
+            mode: "overwrite", 
             autorename: true,
             mute: false,
             strict_conflict: false
-          }),
+        }),
           "Content-Type": "application/octet-stream",
         },
         body: fileBuffer,
