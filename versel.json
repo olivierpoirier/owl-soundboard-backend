@@ -1,7 +1,0 @@
-{
-    "version": 2,
-    "env": {
-      "DROPBOX_TOKEN": "@dropbox_token"
-    }
-  }
-  

@@ -1,0 +1,344 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Owlbear Soundboard API",
+    "summary": "Proxy Dropbox pour l'extension Owlbear Rodeo.",
+    "description": "API serverless qui liste les dossiers/fichiers audio Dropbox et permet de televerser des sons encodes en Base64.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Serveur courant"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Dropbox files",
+      "description": "Navigation et televersement des sons Dropbox"
+    }
+  ],
+  "paths": {
+    "/api/dropbox-files": {
+      "get": {
+        "tags": [
+          "Dropbox files"
+        ],
+        "summary": "Lister les dossiers et fichiers audio",
+        "description": "Retourne le contenu d'un dossier Dropbox. Les dossiers sont retournes avec `isFolder: true`; les fichiers audio `.mp3` et `.wav` sont retournes avec une URL de lecture directe.",
+        "operationId": "listDropboxFiles",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": false,
+            "description": "Chemin Dropbox a lister. Par defaut, l'API utilise `/owlbear`.",
+            "schema": {
+              "type": "string",
+              "default": "/owlbear",
+              "examples": [
+                "/owlbear",
+                "/owlbear/ambiances",
+                "/owlbear/combat"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des dossiers et fichiers audio trouves.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/FolderEntry"
+                      },
+                      {
+                        "$ref": "#/components/schemas/AudioFileEntry"
+                      }
+                    ]
+                  }
+                },
+                "examples": {
+                  "mixedEntries": {
+                    "summary": "Dossier avec sons",
+                    "value": [
+                      {
+                        "name": "Combat",
+                        "path": "/owlbear/combat",
+                        "isFolder": true
+                      },
+                      {
+                        "name": "Sword Clash.mp3",
+                        "url": "https://dl.dropboxusercontent.com/s/example/Sword%20Clash.mp3?raw=1",
+                        "isFolder": false,
+                        "path": "/owlbear/sword clash.mp3"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/DropboxError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Dropbox files"
+        ],
+        "summary": "Televerser un fichier audio",
+        "description": "Envoie un fichier audio encode en Base64 vers un dossier Dropbox. Le champ `fileData` doit contenir seulement la chaine Base64, sans prefixe `data:audio/...;base64,`.",
+        "operationId": "uploadDropboxAudio",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadAudioRequest"
+              },
+              "examples": {
+                "mp3Upload": {
+                  "summary": "Televersement MP3",
+                  "value": {
+                    "name": "fireball.mp3",
+                    "fileData": "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEw...",
+                    "path": "/owlbear"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fichier televerse avec succes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadSuccess"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Reponse Dropbox simplifiee",
+                    "value": {
+                      "success": true,
+                      "metadata": {
+                        "name": "fireball.mp3",
+                        "path_lower": "/owlbear/fireball.mp3",
+                        "path_display": "/owlbear/fireball.mp3"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Le nom du fichier ou les donnees Base64 sont manquants.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missingData": {
+                    "value": {
+                      "error": "Donnees manquantes (name ou fileData)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/DropboxError"
+          }
+        }
+      },
+      "options": {
+        "tags": [
+          "Dropbox files"
+        ],
+        "summary": "Preflight CORS",
+        "description": "Repond aux requetes CORS preflight envoyees par les navigateurs.",
+        "operationId": "dropboxFilesCorsPreflight",
+        "responses": {
+          "200": {
+            "description": "Preflight accepte."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FolderEntry": {
+        "type": "object",
+        "required": [
+          "name",
+          "path",
+          "isFolder"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nom du dossier.",
+            "examples": [
+              "Combat"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "description": "Chemin Dropbox en minuscules.",
+            "examples": [
+              "/owlbear/combat"
+            ]
+          },
+          "isFolder": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AudioFileEntry": {
+        "type": "object",
+        "required": [
+          "name",
+          "url",
+          "isFolder",
+          "path"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nom du fichier audio.",
+            "examples": [
+              "Sword Clash.mp3"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Lien Dropbox transforme pour la lecture directe.",
+            "examples": [
+              "https://dl.dropboxusercontent.com/s/example/Sword%20Clash.mp3?raw=1"
+            ]
+          },
+          "isFolder": {
+            "type": "boolean",
+            "const": false
+          },
+          "path": {
+            "type": "string",
+            "description": "Chemin Dropbox en minuscules.",
+            "examples": [
+              "/owlbear/sword clash.mp3"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "UploadAudioRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "fileData",
+          "path"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nom du fichier avec extension audio.",
+            "examples": [
+              "fireball.mp3"
+            ]
+          },
+          "fileData": {
+            "type": "string",
+            "format": "byte",
+            "description": "Contenu du fichier encode en Base64, sans prefixe data URI.",
+            "examples": [
+              "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEw..."
+            ]
+          },
+          "path": {
+            "type": "string",
+            "description": "Dossier Dropbox de destination.",
+            "examples": [
+              "/owlbear",
+              "/owlbear/ambiances"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "UploadSuccess": {
+        "type": "object",
+        "required": [
+          "success",
+          "metadata"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Metadonnees retournees par Dropbox.",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "description": "Message ou objet d'erreur retourne par Dropbox.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "responses": {
+      "DropboxError": {
+        "description": "Erreur Dropbox ou erreur interne.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "dropbox": {
+                "summary": "Erreur generique",
+                "value": {
+                  "error": "Erreur Dropbox"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

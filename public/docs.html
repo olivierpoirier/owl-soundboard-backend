@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Owlbear Soundboard API</title>
+    <meta
+      name="description"
+      content="Documentation interactive pour les routes Dropbox du backend Owlbear Soundboard."
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0c0914;
+        --panel: rgba(18, 15, 27, 0.86);
+        --panel-strong: #12101a;
+        --panel-soft: rgba(27, 21, 39, 0.78);
+        --ink: #f7f0ff;
+        --muted: #9b91ac;
+        --soft: #6f6680;
+        --line: rgba(166, 113, 255, 0.22);
+        --line-strong: rgba(181, 105, 255, 0.54);
+        --purple: #a855f7;
+        --purple-hot: #c084fc;
+        --yellow: #f5c400;
+        --red: #ff5f79;
+        --green: #22d98b;
+        --blue: #38bdf8;
+        --shadow: 0 22px 80px rgba(0, 0, 0, 0.46);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        overflow-x: hidden;
+        background: var(--bg);
+      }
+
+      body {
+        min-width: 320px;
+        margin: 0;
+        overflow-x: hidden;
+        background:
+          radial-gradient(circle at 50% -18%, rgba(168, 85, 247, 0.2), transparent 34rem),
+          radial-gradient(circle at 82% 18%, rgba(245, 196, 0, 0.07), transparent 24rem),
+          linear-gradient(180deg, #171225 0%, #0c0914 38%, #08070d 100%);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      body::before {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        content: "";
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+        background-size: 52px 52px;
+        mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.78), transparent 74%);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+        background: rgba(10, 8, 17, 0.86);
+        backdrop-filter: blur(20px);
+      }
+
+      .topbar-inner,
+      main {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .topbar-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 14px 0;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .mark {
+        display: grid;
+        width: 46px;
+        height: 46px;
+        place-items: center;
+        overflow: hidden;
+        border: 1px solid rgba(192, 132, 252, 0.42);
+        border-radius: 8px;
+        background: #08070d;
+        box-shadow:
+          0 0 0 3px rgba(168, 85, 247, 0.08),
+          0 0 34px rgba(168, 85, 247, 0.34);
+      }
+
+      .mark img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: clamp(0.95rem, 2vw, 1.18rem);
+        line-height: 1.1;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .brand p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .chip,
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 36px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.04);
+        color: #d9cdf0;
+        font-size: 0.86rem;
+        line-height: 1;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .button {
+        border-color: rgba(168, 85, 247, 0.72);
+        background: linear-gradient(135deg, #6d28d9, #a855f7);
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 0 24px rgba(168, 85, 247, 0.24);
+      }
+
+      .button:hover {
+        border-color: rgba(245, 196, 0, 0.58);
+        box-shadow:
+          0 0 22px rgba(168, 85, 247, 0.34),
+          0 0 26px rgba(245, 196, 0, 0.1);
+      }
+
+      main {
+        padding: 26px 0 44px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(310px, 0.95fr);
+        gap: 16px;
+        align-items: stretch;
+        margin-bottom: 18px;
+      }
+
+      .intro,
+      .route-panel,
+      .reference-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02)),
+          var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      .intro {
+        position: relative;
+        overflow: hidden;
+        padding: clamp(22px, 4vw, 36px);
+      }
+
+      .intro::after {
+        position: absolute;
+        right: -78px;
+        bottom: -120px;
+        width: 260px;
+        height: 260px;
+        border: 1px solid rgba(245, 196, 0, 0.18);
+        border-radius: 50%;
+        content: "";
+        box-shadow:
+          0 0 48px rgba(245, 196, 0, 0.12),
+          inset 0 0 70px rgba(168, 85, 247, 0.12);
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 16px;
+        color: var(--purple-hot);
+        font-size: 0.76rem;
+        font-weight: 900;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--yellow);
+        box-shadow: 0 0 18px rgba(245, 196, 0, 0.72);
+        content: "";
+      }
+
+      .intro h2 {
+        max-width: 760px;
+        margin: 0;
+        font-size: clamp(2rem, 4.5vw, 4.15rem);
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .intro p {
+        max-width: 700px;
+        margin: 18px 0 0;
+        color: #c9bed8;
+        font-size: clamp(0.98rem, 1.5vw, 1.08rem);
+        line-height: 1.62;
+      }
+
+      .quick-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 24px;
+      }
+
+      .route-panel {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .route-panel header {
+        padding: 18px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.025);
+      }
+
+      .route-panel h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .route-panel p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .route-list {
+        display: grid;
+        align-content: start;
+        gap: 10px;
+        padding: 16px;
+      }
+
+      .route-card {
+        display: grid;
+        gap: 8px;
+        min-width: 0;
+        border: 1px solid rgba(168, 85, 247, 0.18);
+        border-radius: 8px;
+        background: rgba(10, 8, 17, 0.66);
+        padding: 14px;
+      }
+
+      .route-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .method {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 66px;
+        height: 28px;
+        border-radius: 7px;
+        color: #07100c;
+        font-size: 0.76rem;
+        font-weight: 900;
+        letter-spacing: 0.07em;
+      }
+
+      .method.get {
+        background: var(--green);
+        box-shadow: 0 0 18px rgba(34, 217, 139, 0.25);
+      }
+
+      .method.post {
+        background: var(--yellow);
+        box-shadow: 0 0 18px rgba(245, 196, 0, 0.22);
+      }
+
+      .method.options {
+        background: var(--purple-hot);
+        color: #120817;
+        box-shadow: 0 0 18px rgba(192, 132, 252, 0.24);
+      }
+
+      code {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        border: 1px solid rgba(168, 85, 247, 0.22);
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.035);
+        color: #f3e8ff;
+        padding: 3px 6px;
+        font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+        font-size: 0.9em;
+      }
+
+      .route-card small {
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .reference-card {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        background: rgba(6, 5, 12, 0.88);
+      }
+
+      .reference-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        min-width: 0;
+        border-bottom: 1px solid var(--line);
+        padding: 16px 18px;
+        background: linear-gradient(90deg, rgba(168, 85, 247, 0.12), rgba(245, 196, 0, 0.04));
+      }
+
+      .reference-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .reference-header p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .reference-badge {
+        flex: 0 0 auto;
+        border: 1px solid rgba(245, 196, 0, 0.34);
+        border-radius: 999px;
+        padding: 7px 10px;
+        color: #ffe680;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      #scalar-api {
+        width: 100%;
+        max-width: 100%;
+        min-height: 760px;
+        min-width: 0;
+        overflow: hidden;
+        background: #05040b;
+      }
+
+      #scalar-api * {
+        max-width: 100%;
+      }
+
+      #scalar-api .scalar-app,
+      #scalar-api .scalar-api-reference,
+      #scalar-api [class*="scalar"] {
+        min-width: 0;
+      }
+
+      .fallback {
+        display: none;
+        padding: 18px;
+        background: #08070d;
+      }
+
+      .fallback.is-visible {
+        display: block;
+      }
+
+      .fallback-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
+        gap: 16px;
+      }
+
+      .fallback h3,
+      .fallback h4 {
+        margin: 0;
+      }
+
+      .fallback p {
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .endpoint-picker {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .endpoint-button {
+        width: 100%;
+        border: 1px solid rgba(168, 85, 247, 0.22);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.035);
+        padding: 14px;
+        color: var(--ink);
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .endpoint-button[aria-pressed="true"] {
+        border-color: rgba(192, 132, 252, 0.75);
+        box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.13);
+      }
+
+      .tester {
+        display: grid;
+        gap: 12px;
+        border: 1px solid rgba(168, 85, 247, 0.22);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.035);
+        padding: 16px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: #dacbf3;
+        font-size: 0.88rem;
+        font-weight: 800;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        border: 1px solid rgba(168, 85, 247, 0.26);
+        border-radius: 8px;
+        background: rgba(5, 4, 11, 0.74);
+        color: var(--ink);
+        font: inherit;
+        padding: 11px 12px;
+      }
+
+      textarea {
+        min-height: 190px;
+        resize: vertical;
+        font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+        font-size: 0.87rem;
+        line-height: 1.5;
+      }
+
+      pre {
+        min-height: 160px;
+        max-height: 360px;
+        overflow: auto;
+        margin: 0;
+        border: 1px solid rgba(168, 85, 247, 0.22);
+        border-radius: 8px;
+        background: #05040b;
+        color: #f3e8ff;
+        padding: 14px;
+        font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+        font-size: 0.86rem;
+        line-height: 1.55;
+      }
+
+      .status-line {
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      @media (max-width: 900px) {
+        .topbar-inner {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .toolbar {
+          justify-content: flex-start;
+        }
+
+        .hero,
+        .fallback-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .intro h2 {
+          font-size: clamp(2rem, 12vw, 3.35rem);
+        }
+      }
+
+      @media (max-width: 560px) {
+        .topbar-inner,
+        main {
+          width: min(100% - 20px, 1120px);
+        }
+
+        .brand {
+          align-items: flex-start;
+        }
+
+        .mark {
+          width: 40px;
+          height: 40px;
+        }
+
+        .chip,
+        .button {
+          width: 100%;
+        }
+
+        .reference-header,
+        .route-line {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .reference-badge {
+          width: 100%;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="mark" aria-hidden="true">
+            <img src="/iconExtension.png" alt="" />
+          </div>
+          <div>
+            <h1>Owl Soundboard</h1>
+            <p>Console backend Dropbox</p>
+          </div>
+        </div>
+        <div class="toolbar" aria-label="Raccourcis">
+          <span class="chip">OpenAPI 3.1</span>
+          <span class="chip">Scalar</span>
+          <a class="button" href="/openapi.json">Voir la spec</a>
+        </div>
+      </div>
+    </div>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div class="intro">
+          <div class="eyebrow">API retrowave</div>
+          <h2 id="page-title">Tester les routes du soundboard.</h2>
+          <p>
+            Les endpoints, les parametres, les bodies JSON et les exemples de
+            reponses sont regroupes ici. Les tests utilisent le serveur courant,
+            donc la page fonctionne en local comme sur Vercel.
+          </p>
+          <div class="quick-actions">
+            <a class="button" href="#scalar-api">Explorer la reference</a>
+            <a class="chip" href="/api/dropbox-files?path=/owlbear">Essayer le GET</a>
+          </div>
+        </div>
+
+        <aside class="route-panel" aria-label="Routes disponibles">
+          <header>
+            <h3>Routes documentees</h3>
+            <p>Un endpoint, trois methodes.</p>
+          </header>
+          <div class="route-list">
+            <article class="route-card">
+              <div class="route-line">
+                <span class="method get">GET</span>
+                <code>/api/dropbox-files</code>
+              </div>
+              <small>Query: <code>path</code>. Retourne dossiers + fichiers audio.</small>
+            </article>
+            <article class="route-card">
+              <div class="route-line">
+                <span class="method post">POST</span>
+                <code>/api/dropbox-files</code>
+              </div>
+              <small>Body JSON: <code>name</code>, <code>fileData</code>, <code>path</code>.</small>
+            </article>
+            <article class="route-card">
+              <div class="route-line">
+                <span class="method options">OPTIONS</span>
+                <code>/api/dropbox-files</code>
+              </div>
+              <small>Preflight CORS pour les navigateurs.</small>
+            </article>
+          </div>
+        </aside>
+      </section>
+
+      <section class="reference-card" aria-label="Reference API interactive">
+        <div class="reference-header">
+          <div>
+            <h3>Reference interactive</h3>
+            <p>Schemas JSON, exemples et requetes testables.</p>
+          </div>
+          <span class="reference-badge">Dropbox files</span>
+        </div>
+        <div id="scalar-api"></div>
+        <div id="fallback-docs" class="fallback" aria-live="polite">
+          <div class="fallback-grid">
+            <div>
+              <h3>Reference rapide</h3>
+              <p>
+                Scalar n'a pas pu charger depuis le CDN. La page garde quand
+                meme les schemas et un testeur minimal pour travailler en local.
+              </p>
+              <div class="endpoint-picker" id="endpoint-picker"></div>
+            </div>
+
+            <form class="tester" id="request-form">
+              <h4 id="tester-title">GET /api/dropbox-files</h4>
+              <label id="path-field">
+                Chemin Dropbox
+                <input id="path-input" name="path" value="/owlbear" />
+              </label>
+              <label id="body-field">
+                Body JSON
+                <textarea id="body-input" name="body"></textarea>
+              </label>
+              <button class="button" type="submit">Envoyer la requete</button>
+              <div class="status-line" id="status-line">Pret.</div>
+              <pre id="response-output">{}</pre>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+    <script>
+      const fallbackEndpoints = [
+        {
+          method: "GET",
+          path: "/api/dropbox-files",
+          title: "Lister les fichiers",
+          help: "Utilise le query param path.",
+          body: null,
+        },
+        {
+          method: "POST",
+          path: "/api/dropbox-files",
+          title: "Televerser un fichier",
+          help: "Envoie name, fileData et path.",
+          body: {
+            name: "fireball.mp3",
+            fileData: "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEw...",
+            path: "/owlbear",
+          },
+        },
+        {
+          method: "OPTIONS",
+          path: "/api/dropbox-files",
+          title: "Tester le preflight",
+          help: "Valide la reponse CORS.",
+          body: null,
+        },
+      ]
+
+      const state = {
+        selected: fallbackEndpoints[0],
+      }
+
+      function initScalar() {
+        if (!window.Scalar || !window.Scalar.createApiReference) {
+          showFallback()
+          return
+        }
+
+        window.Scalar.createApiReference("#scalar-api", {
+          url: "/openapi.json",
+          theme: "purple",
+          layout: "modern",
+          darkMode: true,
+          hideDarkModeToggle: true,
+          agent: {
+            disabled: true,
+          },
+          defaultHttpClient: {
+            targetKey: "js",
+            clientKey: "fetch",
+          },
+          customCss: `
+            :root {
+              --scalar-background-1: #05040b;
+              --scalar-background-2: #0e0b17;
+              --scalar-background-3: #171125;
+              --scalar-color-1: #f7f0ff;
+              --scalar-color-2: #c8badb;
+              --scalar-color-3: #9187a4;
+              --scalar-border-color: rgba(168, 85, 247, 0.28);
+              --scalar-accent: #a855f7;
+            }
+
+            .scalar-api-reference {
+              width: 100%;
+              max-width: 100%;
+              background: #05040b;
+            }
+
+            .scalar-app,
+            .scalar-api-client,
+            .scalar-api-reference,
+            .references-layout {
+              max-width: 100%;
+              min-width: 0;
+            }
+
+            .section-container,
+            .references-classic-section,
+            .references-modern-layout {
+              max-width: 100%;
+            }
+
+            .darklight,
+            .dark-mode-toggle {
+              display: none !important;
+            }
+          `,
+        })
+      }
+
+      function showFallback() {
+        document.getElementById("scalar-api").hidden = true
+        document.getElementById("fallback-docs").classList.add("is-visible")
+        renderEndpointPicker()
+        renderTester()
+      }
+
+      function renderEndpointPicker() {
+        const picker = document.getElementById("endpoint-picker")
+        picker.innerHTML = ""
+
+        fallbackEndpoints.forEach((endpoint) => {
+          const button = document.createElement("button")
+          button.type = "button"
+          button.className = "endpoint-button"
+          button.setAttribute("aria-pressed", endpoint === state.selected)
+          button.innerHTML = `
+            <div class="route-line">
+              <span class="method ${endpoint.method.toLowerCase()}">${endpoint.method}</span>
+              <code>${endpoint.path}</code>
+            </div>
+            <small>${endpoint.help}</small>
+          `
+          button.addEventListener("click", () => {
+            state.selected = endpoint
+            renderEndpointPicker()
+            renderTester()
+          })
+          picker.appendChild(button)
+        })
+      }
+
+      function renderTester() {
+        const endpoint = state.selected
+        const hasBody = Boolean(endpoint.body)
+
+        document.getElementById("tester-title").textContent =
+          `${endpoint.method} ${endpoint.path}`
+        document.getElementById("path-field").hidden = endpoint.method !== "GET"
+        document.getElementById("body-field").hidden = !hasBody
+        document.getElementById("body-input").value = hasBody
+          ? JSON.stringify(endpoint.body, null, 2)
+          : ""
+        document.getElementById("status-line").textContent = endpoint.title
+        document.getElementById("response-output").textContent = "{}"
+      }
+
+      document.getElementById("request-form").addEventListener("submit", async (event) => {
+        event.preventDefault()
+
+        const endpoint = state.selected
+        const statusLine = document.getElementById("status-line")
+        const output = document.getElementById("response-output")
+        const pathValue = document.getElementById("path-input").value.trim() || "/owlbear"
+        const url =
+          endpoint.method === "GET"
+            ? `${endpoint.path}?path=${encodeURIComponent(pathValue)}`
+            : endpoint.path
+
+        const requestInit = {
+          method: endpoint.method,
+          headers: endpoint.body ? { "Content-Type": "application/json" } : {},
+        }
+
+        if (endpoint.body) {
+          try {
+            requestInit.body = document.getElementById("body-input").value
+            JSON.parse(requestInit.body)
+          } catch (error) {
+            statusLine.textContent = "Le body JSON est invalide."
+            output.textContent = String(error)
+            return
+          }
+        }
+
+        statusLine.textContent = "Requete en cours..."
+        output.textContent = ""
+
+        try {
+          const response = await fetch(url, requestInit)
+          const text = await response.text()
+          const formatted = text ? JSON.stringify(JSON.parse(text), null, 2) : ""
+          statusLine.textContent = `${response.status} ${response.statusText}`
+          output.textContent = formatted || "(reponse vide)"
+        } catch (error) {
+          statusLine.textContent = "Erreur pendant la requete."
+          output.textContent = String(error)
+        }
+      })
+
+      window.addEventListener("load", initScalar)
+    </script>
+  </body>
+</html>
